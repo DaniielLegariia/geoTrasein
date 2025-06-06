@@ -244,16 +244,30 @@ func updateGeofenceEvent(idGEo int, Imei string, DateGPs string, Evengps string,
 
 // Función para formatear la fecha en el formato que Oracle espera
 func formatDateForOracle(dateStr string) string {
-	// Primero intentamos parsear la fecha
-	t, err := time.Parse("2006-01-02 15:04:05", dateStr)
-	if err != nil {
-		// Si hay error, intentamos con otro formato común
-		t, err = time.Parse(time.RFC3339, dateStr)
-		if err != nil {
-			log.Printf("Error al parsear la fecha %s: %v", dateStr, err)
-			return dateStr
+	// Intentamos parsear la fecha en diferentes formatos comunes
+	var t time.Time
+	var err error
+
+	// Lista de formatos a intentar
+	formats := []string{
+		"2006-01-02 15:04:05",
+		time.RFC3339,
+		"02/01/2006 15:04:05",
+		"2006-01-02T15:04:05Z",
+	}
+
+	for _, format := range formats {
+		t, err = time.Parse(format, dateStr)
+		if err == nil {
+			break
 		}
 	}
-	// Formateamos la fecha en el formato que Oracle espera: DD-MON-YYYY HH24:MI:SS
-	return t.Format("02-Jan-2006 15:04:05")
+
+	if err != nil {
+		log.Printf("Error al parsear la fecha %s: %v", dateStr, err)
+		return dateStr
+	}
+
+	// Formateamos la fecha en el formato que Oracle espera: dd/mm/rrrr hh24:mi:ss
+	return t.Format("02/01/2006 15:04:05")
 }
